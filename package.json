@@ -1,0 +1,7 @@
+{
+  "name": "fakepsp",
+  "private": true,
+  "dependencies": {
+    "crawler": "^1.1.2"
+  }
+}
