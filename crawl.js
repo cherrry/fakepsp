@@ -1,7 +1,7 @@
 const Crawler = require('crawler');
 
-const RE_ALPHA = /^([a-zü]+)/;
-const RE_WORD = /^([^a-z]+)\s*([a-z]+[1-6])/;
+const RE_ALPHA = /([a-zü]+)/;
+const RE_WORD = /([^a-z]+)\s*([a-z]+[1-6])/;
 const c = new Crawler();
 
 const run = (type, link) => new Promise((resolve, reject) => {
@@ -13,7 +13,8 @@ const run = (type, link) => new Promise((resolve, reject) => {
         return done();
       }
       const rows = $('table tr');
-      const pth = $(rows[1]).find('td:first-child').text().trim().match(RE_ALPHA)[1];
+      const pth = $(rows[1]).find('td:first-child')
+        .text().trim().toLowerCase().match(RE_ALPHA)[1];
 
       let results = [];
       for (let i = 1; i < rows.length; ++i) {
@@ -26,7 +27,7 @@ const run = (type, link) => new Promise((resolve, reject) => {
           }
           const match = RE_WORD.exec(w.trim());
           results.push({
-            group: {pth, jyut},
+            metadata: {type, pth, jyut},
             word: {word: match[1].trim(), pth: '', jyut: match[2].trim()},
           });
         });
@@ -37,6 +38,13 @@ const run = (type, link) => new Promise((resolve, reject) => {
   });
 });
 
+const initials = [
+  'b', 'p', 'm', 'f', 'd', 't', 'n',
+  'l', 'g', 'k', 'h', 'j', 'q', 'x',
+  'zh', 'ch', 'sh', 'r', 'z', 'c', 's',
+  'y', 'w', '0',
+];
+
 const finals = [
   'a', 'ia', 'ua', 'o', 'uo', 'e', 'ie',
   'ue', 'i', 'i_1', 'i_2', 'u1', 'u2', 'ai',
@@ -46,7 +54,10 @@ const finals = [
   'ong', 'iong',
 ];
 
-Promise.all(finals.map((f) => run('finals', f))).then((results) => {
+const everything = initials.map((i) => run('initials', i))
+  .concat(finals.map((f) => run('finals', f)));
+
+Promise.all(everything).then((results) => {
   let finalResult = [];
   results.forEach((result) => {
     result.forEach((value) => finalResult.push(value));
